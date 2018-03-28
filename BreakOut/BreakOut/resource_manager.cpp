@@ -45,6 +45,7 @@ Shader ResourceManager::loadShaderFromFile(const GLchar *vShaderFile, const GLch
 	std::string vertexCode;
 	std::string fragmentCode;
 	std::string geometryCode;
+	
 	try
 	{	
 		std::ifstream vertexShaderFile(vShaderFile);
@@ -60,6 +61,8 @@ Shader ResourceManager::loadShaderFromFile(const GLchar *vShaderFile, const GLch
 		vertexCode = vShaderStream.str();
 		fragmentCode = fShaderStream.str();
 		
+		//std::cout << vertexCode << std::endl;		
+
 		if (gShaderFile != nullptr)
 		{
 			std::ifstream geometryShaderFile(gShaderFile);
@@ -90,11 +93,15 @@ Texture2D ResourceManager::loadTextureFromFile(const GLchar *file, GLboolean alp
 		texture.Internal_Format = GL_RGBA;
 		texture.Image_Format = GL_RGBA;
 	}
-	
+	stbi_set_flip_vertically_on_load(true);
 	int width, height;
 	unsigned char* image = stbi_load(file, &width, &height, 0,
 		texture.Image_Format == GL_RGBA ? STBI_rgb_alpha:STBI_rgb);
-	
+	if(image==nullptr)
+	{
+		std::cout << "ERROR Load Texture Failed" << std::endl;
+		std::cout<<stbi_failure_reason()<<std::endl;
+	}
 	texture.Generate(width, height, image);
 	
 	stbi_image_free(image);

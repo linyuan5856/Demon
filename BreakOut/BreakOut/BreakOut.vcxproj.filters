@@ -36,6 +36,9 @@
     <ClCompile Include="resource_manager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="sprite_renderer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -50,5 +53,16 @@
     <ClInclude Include="resource_manager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="sprite_renderer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sprite.fs">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="sprite.vs">
+      <Filter>源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

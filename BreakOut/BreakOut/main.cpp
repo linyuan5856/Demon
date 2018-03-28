@@ -11,10 +11,9 @@ const GLuint SCREEN_WIDTH = 800;
 const GLuint SCREEN_HEIGHT = 600;
 GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
+Game Breakout = Game(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-Game Breakout(SCREEN_WIDTH,SCREEN_HEIGHT);
-
-int main(int argc, char *argv[])
+int main()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -31,10 +30,11 @@ int main(int argc, char *argv[])
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_callback);
 
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+    //glEnable(GL_CULL_FACE);
+	 glEnable(GL_BLEND);
+	 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+     
+	Breakout.Init();
 	
 	while (!glfwWindowShouldClose(window))
 	{		
