@@ -99,7 +99,7 @@ Texture2D ResourceManager::loadTextureFromFile(const GLchar *file, GLboolean alp
 		texture.Image_Format == GL_RGBA ? STBI_rgb_alpha:STBI_rgb);
 	if(image==nullptr)
 	{
-		std::cout << "ERROR Load Texture Failed" << std::endl;
+		std::cout << "ERROR Load Texture Failed (" <<file<<")"<< std::endl;
 		std::cout<<stbi_failure_reason()<<std::endl;
 	}
 	texture.Generate(width, height, image);

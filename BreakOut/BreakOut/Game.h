@@ -1,5 +1,6 @@
 #pragma once
 #include <glad/glad.h>
+#include "game_level.h"
 
 enum GameState
 {
@@ -8,9 +9,16 @@ enum GameState
 	GAME_WIN,
 };
 
+const glm::vec2 PLAYER_SIZE(100, 20);
+
+const GLfloat PLAYER_VELOCITY(500.0f);
+
 class Game
 {
 public:
+	std::vector<GameLevel> Levels;
+	GLuint                 Level;
+
 	GameState State;
 	GLboolean Keys[1024];
 	GLuint Width, Height;
