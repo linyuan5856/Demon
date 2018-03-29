@@ -51,6 +51,9 @@
     <ClCompile Include="particle_generator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="post_processor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -80,6 +83,12 @@
     <ClInclude Include="particle_generator.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="post_processor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PowerUp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="sprite.fs">
@@ -92,6 +101,12 @@
       <Filter>源文件</Filter>
     </None>
     <None Include="particle.vs">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="post_processing.vs">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="post_processing.fs">
       <Filter>源文件</Filter>
     </None>
   </ItemGroup>
