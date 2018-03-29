@@ -6,6 +6,13 @@
 #include "particle_generator.h"
 #include "post_processor.h"
 #include <algorithm>
+#include <irrKlang/irrKlang.h>
+#include "text_renderer.h"
+#include <iostream>
+
+using namespace irrklang;
+
+ISoundEngine *SoundEngine = createIrrKlangDevice();
 
 SpriteRenderer *Renderer;
 GameObject     *Player;
@@ -14,6 +21,7 @@ BallObject     *Ball;
 ParticleGenerator   *Particles;
 PostProcessor     *Effects;
 GLfloat            ShakeTime = 0.0f;
+TextRenderer  *Text;
 
 const char* lv1 = "../levels/Standard.txt";
 const char* lv2 = "../levels/Bounce galore.txt";
@@ -22,7 +30,7 @@ const char* lv4 = "../levels/Space invader.txt";
 
 
 Game::Game(GLuint width, GLuint height) :
-	State(GAME_ACTIVE), Keys(), Width(width), Height(height)
+	State(GAME_MENU), Keys(), Width(width), Height(height),Lives(3),Level(0)
 {
 
 }
@@ -34,10 +42,14 @@ Game::~Game()
 	delete Ball;
 	delete Particles;
 	delete Effects;
+	delete Text;
+	SoundEngine->drop();
 }
 
 void Game::Init()
 {
+	SoundEngine->play2D("../audio/breakout.mp3", GL_TRUE);
+
 	ResourceManager::LoadShader("sprite.vs", "sprite.fs", nullptr, "sprite");
 	ResourceManager::LoadShader("particle.vs", "particle.fs", nullptr, "particle");
 	ResourceManager::LoadShader("post_processing.vs", "post_processing.fs", nullptr, "postprocessing");
@@ -87,6 +99,9 @@ void Game::Init()
 	glm::vec2 ballPos = playerPos + glm::vec2(PLAYER_SIZE.x / 2 - BALL_RADIUS, -BALL_RADIUS * 2);
 	Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY,
 		ResourceManager::GetTexture("face"));
+
+	Text = new TextRenderer(this->Width, this->Height);
+	Text->Load("../fonts/ocraext.TTF", 24);
 }
 
 void Game::Update(GLfloat dt)
@@ -107,8 +122,22 @@ void Game::Update(GLfloat dt)
 
 	if (Ball->Position.y >= this->Height) // 球是否接触底部边界？
 	{
+		--this->Lives;
+		// 玩家是否已失去所有生命值? : 游戏结束
+		if (this->Lives == 0)
+		{
+			this->ResetLevel();
+			this->State = GAME_MENU;
+		}
+		this->ResetPlayer();
+	}
+
+	if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
+	{
 		this->ResetLevel();
 		this->ResetPlayer();
+		Effects->Chaos = GL_TRUE;
+		this->State = GAME_WIN;
 	}
 }
 
@@ -139,11 +168,41 @@ void Game::ProcessInput(GLfloat dt)
 		if (this->Keys[GLFW_KEY_SPACE])
 			Ball->Stuck = false;
 	}
+	if (this->State == GAME_MENU)
+	{
+		if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+		{
+			this->State = GAME_ACTIVE;
+			this->KeysProcessed[GLFW_KEY_ENTER] = GL_TRUE;
+		}
+		if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
+		{
+			this->Level = (this->Level + 1) % 4;
+			this->KeysProcessed[GLFW_KEY_W] = GL_TRUE;
+		}
+		if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
+		{
+			if (this->Level > 0)
+				--this->Level;
+			else
+				this->Level = 3;
+			this->KeysProcessed[GLFW_KEY_S] = GL_TRUE;
+		}
+	}
+	if (this->State == GAME_WIN)
+	{
+		if (this->Keys[GLFW_KEY_ENTER])
+		{
+			this->KeysProcessed[GLFW_KEY_ENTER] = GL_TRUE;
+			Effects->Chaos = GL_FALSE;
+			this->State = GAME_MENU;
+		}
+	}
 }
 
 void Game::Render()
 {
-	if (this->State == GAME_ACTIVE)
+	if (this->State == GAME_ACTIVE|| this->State == GAME_MENU)
 	{
 		Effects->BeginRender();
 
@@ -165,6 +224,22 @@ void Game::Render()
 		Effects->EndRender();
 		
 		Effects->Render(glfwGetTime());
+		Text->RenderText("Lives:" + std::to_string(this->Lives), 5.0f, 5.0f, 1.0f);
+		Text->RenderText("LEVEL:" + std::to_string(this->Level), 5.0f, 48.0f, 1.0f);
+	}
+	if (this->State == GAME_MENU)
+	{
+		Text->RenderText("Press ENTER to start", 250.0f, Height / 2, 1.0f);
+		Text->RenderText("Press W or S to select level", 245.0f, Height / 2 + 20.0f, 0.75f);
+	}
+	if (this->State == GAME_WIN)
+	{
+		Text->RenderText(
+			"You WON!!!", 320.0, Height / 2 - 20.0, 1.0, glm::vec3(0.0, 1.0, 0.0)
+		);
+		Text->RenderText(
+			"Press ENTER to retry or ESC to quit", 130.0, Height / 2, 1.0, glm::vec3(1.0, 1.0, 0.0)
+		);
 	}
 }
 
@@ -178,6 +253,8 @@ void Game::ResetLevel()
 		this->Levels[2].Load(lv3, this->Width, this->Height * 0.5f);
 	else if (this->Level == 3)
 		this->Levels[3].Load(lv4, this->Width, this->Height * 0.5f);
+
+	this->Lives = 3;
 }
 
 void Game::ResetPlayer()
@@ -333,11 +410,13 @@ void Game::DoCollisions()
 				{
 					box.Destroyed = GL_TRUE;	
 					this->SpawnPowerUps(box);
+					SoundEngine->play2D("../audio/bleep.mp3", GL_FALSE);
 				}			
 				else
 				{
 					ShakeTime = 0.05f;
 					Effects->Shake = GL_TRUE;
+					SoundEngine->play2D("../audio/solid.wav", GL_FALSE);
 				}
 				
 				Direction dir = std::get<1>(collision);
@@ -379,6 +458,7 @@ void Game::DoCollisions()
 				ActivatePowerUp(powerUp);
 				powerUp.Destroyed = GL_TRUE;
 				powerUp.Activated = GL_TRUE;
+				SoundEngine->play2D("../audio/powerup.wav", GL_FALSE);
 			}
 		}
 	}
@@ -399,6 +479,7 @@ void Game::DoCollisions()
 		Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity); // Keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
 																					// Fix sticky paddle
 		Ball->Velocity.y = -1 * abs(Ball->Velocity.y);
+		SoundEngine->play2D("../audio/bleep.wav", GL_FALSE);
 	}
 }
 

@@ -32,6 +32,9 @@ public:
 	std::vector<GameLevel> Levels;
 	GLuint                 Level;
 
+	GLuint Lives;
+	GLboolean KeysProcessed[1024];
+
 	std::vector<PowerUp>   PowerUps;
 
 	GameState State;

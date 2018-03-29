@@ -54,6 +54,9 @@
     <ClCompile Include="post_processor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="text_renderer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -89,6 +92,9 @@
     <ClInclude Include="PowerUp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="text_renderer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="sprite.fs">
@@ -107,6 +113,12 @@
       <Filter>源文件</Filter>
     </None>
     <None Include="post_processing.fs">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="text.vs">
+      <Filter>源文件</Filter>
+    </None>
+    <None Include="text.fs">
       <Filter>源文件</Filter>
     </None>
   </ItemGroup>
