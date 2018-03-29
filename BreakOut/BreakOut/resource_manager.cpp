@@ -93,7 +93,7 @@ Texture2D ResourceManager::loadTextureFromFile(const GLchar *file, GLboolean alp
 		texture.Internal_Format = GL_RGBA;
 		texture.Image_Format = GL_RGBA;
 	}
-	stbi_set_flip_vertically_on_load(true);
+	//stbi_set_flip_vertically_on_load(true);
 	int width, height;
 	unsigned char* image = stbi_load(file, &width, &height, 0,
 		texture.Image_Format == GL_RGBA ? STBI_rgb_alpha:STBI_rgb);
