@@ -3,12 +3,14 @@
 #include "sprite_renderer.h"
 #include "resource_manager.h"
 #include "ball_object.h"
+#include "particle_generator.h"
 
 SpriteRenderer *Renderer;
 GameObject     *Player;
 BallObject     *Ball;
 const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
 const GLfloat BALL_RADIUS = 12.5f;
+ParticleGenerator   *Particles;
 
 const char* lv1 = "../levels/Standard.txt";
 const char* lv2 = "../levels/Bounce galore.txt";
@@ -31,16 +33,27 @@ Game::~Game()
 void Game::Init()
 {
 	ResourceManager::LoadShader("sprite.vs", "sprite.fs", nullptr, "sprite");
+	ResourceManager::LoadShader("particle.vs", "particle.fs", nullptr, "particle");
 
 	glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(this->Width),
 		static_cast<GLfloat>(this->Height), 0.0f, -1.0f, 1.0f);
 	ResourceManager::GetShader("sprite").Use().SetInteger("sprite", 0);
 	ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
+	ResourceManager::GetShader("particle").Use().SetInteger("sprite", 0);
+	ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
 
 	ResourceManager::LoadTexture("../textures/background.jpg", GL_FALSE, "background");
 	ResourceManager::LoadTexture("../textures/awesomeface.png", GL_TRUE, "face");
 	ResourceManager::LoadTexture("../textures/block.png", GL_FALSE, "block");
 	ResourceManager::LoadTexture("../textures/block_solid.png", GL_FALSE, "block_solid");
+	ResourceManager::LoadTexture("../textures/paddle.png", GL_TRUE, "paddle");
+	ResourceManager::LoadTexture("../textures/particle.png", GL_TRUE, "particle");
+
+	Shader shader = ResourceManager::GetShader("sprite");
+	Renderer = new SpriteRenderer(shader);
+
+	Particles = new ParticleGenerator(ResourceManager::GetShader("particle"),
+		ResourceManager::GetTexture("particle"),500);
 
 	GameLevel one; one.Load(lv1, this->Width, this->Height * 0.5);
 	GameLevel two; two.Load(lv2, this->Width, this->Height * 0.5);
@@ -59,15 +72,14 @@ void Game::Init()
 	glm::vec2 ballPos = playerPos + glm::vec2(PLAYER_SIZE.x / 2 - BALL_RADIUS, -BALL_RADIUS * 2);
 	Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY,
 		ResourceManager::GetTexture("face"));
-
-	Shader shader = ResourceManager::GetShader("sprite");
-	Renderer =new SpriteRenderer(shader);
 }
 
 void Game::Update(GLfloat dt)
 {
 	Ball->Move(dt, this->Width);
 	this->DoCollisions();
+	Particles->Update(dt, *Ball, 2, glm::vec2(Ball->Radius / 2));
+
 	if (Ball->Position.y >= this->Height) // 球是否接触底部边界？
 	{
 		this->ResetLevel();
@@ -84,16 +96,20 @@ void Game::ProcessInput(GLfloat dt)
 		if (this->Keys[GLFW_KEY_A])
 		{
 			if (Player->Position.x >= 0)
+			{
 				Player->Position.x -= velocity;
-			if (Ball->Stuck)
-				Ball->Position.x -= velocity;
+				if (Ball->Stuck)
+					Ball->Position.x -= velocity;
+			}			
 		}
 		if (this->Keys[GLFW_KEY_D])
 		{
 			if (Player->Position.x <= this->Width - Player->Size.x)
+			{
 				Player->Position.x += velocity;
-			if (Ball->Stuck)
-				Ball->Position.x += velocity;
+				if (Ball->Stuck)
+					Ball->Position.x += velocity;
+			}		
 		}
 		if (this->Keys[GLFW_KEY_SPACE])
 			Ball->Stuck = false;
@@ -110,7 +126,11 @@ void Game::Render()
 		this->Levels[this->Level].Draw(*Renderer);
 		
 		Player->Draw(*Renderer);
+
+		Particles->Draw();
+
 		Ball->Draw(*Renderer);
+
 	}
 }
 
@@ -128,7 +148,6 @@ void Game::ResetLevel()
 
 void Game::ResetPlayer()
 {
-	// Reset player/ball stats
 	Player->Size = PLAYER_SIZE;
 	Player->Position = glm::vec2(this->Width / 2 - PLAYER_SIZE.x / 2, this->Height - PLAYER_SIZE.y);
 	Ball->Reset(Player->Position + glm::vec2(PLAYER_SIZE.x / 2 - BALL_RADIUS, -(BALL_RADIUS * 2)), INITIAL_BALL_VELOCITY);
@@ -231,7 +250,6 @@ Collision CheckCollision(BallObject &one, GameObject &two) // AABB - Circle coll
 		return std::make_tuple(GL_FALSE, UP, glm::vec2(0, 0));
 }
 
-// Calculates which direction a vector is facing (N,E,S or W)
 Direction VectorDirection(glm::vec2 target)
 {
 	glm::vec2 compass[] = {
@@ -251,5 +269,5 @@ Direction VectorDirection(glm::vec2 target)
 			best_match = i;
 		}
 	}
-	return (Direction)best_match;
+	return static_cast<Direction>(best_match);
 }

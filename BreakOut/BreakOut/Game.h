@@ -42,4 +42,3 @@ public:
 	void ResetLevel();
 	void ResetPlayer();
 };
-
